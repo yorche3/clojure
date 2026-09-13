@@ -14,8 +14,10 @@ Implementation of the [05_Naive_Sort](https://yorche3.github.io/programming_lang
 
 | Archivo / Directorio | Propósito |
 |----------------------|-----------|
-| [`src/naive_sort/naive_sort.clj`](src/naive_sort/naive_sort.clj) | Implementación de las 3 funciones públicas: `selection-sort`, `bubble-sort` e `insertion-sort`. |
-| [`test/naive_sort/naive_sort_test.clj`](test/naive_sort/naive_sort_test.clj) | Pruebas unitarias: 3 tests con 8 casos compartidos (24 aserciones). |
+| [`src/naive_sort/naive_sort.clj`](src/naive_sort/naive_sort.clj) | Implementación idiomática: 3 funciones públicas usando vectores persistentes (`reduce`, `conj`, `subvec`, `concat`). |
+| [`src/naive_sort/naive_sort_intarray.clj`](src/naive_sort/naive_sort_intarray.clj) | Implementación con Java arrays: 3 funciones públicas usando `int-array`, `aget`, `aset`, `dotimes`. |
+| [`test/naive_sort/naive_sort_test.clj`](test/naive_sort/naive_sort_test.clj) | Pruebas para la versión idiomática: 3 tests con 8 casos compartidos (24 aserciones). |
+| [`test/naive_sort/naive_sort_intarray_test.clj`](test/naive_sort/naive_sort_intarray_test.clj) | Pruebas para la versión con arrays: 3 tests con 8 casos compartidos (24 aserciones). |
 | [`deps.edn`](deps.edn) | Configuración de dependencias y alias (`:test`, `:build`). |
 | [`build.clj`](build.clj) | Automatización con `tools.build` (`test`, `ci`, `install`, `deploy`). |
 | [`doc/intro.md`](doc/intro.md) | Documentación de la librería generada por la plantilla. |
@@ -29,10 +31,12 @@ Implementation of the [05_Naive_Sort](https://yorche3.github.io/programming_lang
 naive_sort/
 ├── src/
 │   └── naive_sort/
-│       └── naive_sort.clj           # 3 funciones públicas
+│       └── naive_sort.clj           # 3 funciones públicas (idiomática)
+│       └── naive_sort_intarray.clj  # 3 funciones públicas (int-array)
 ├── test/
 │   └── naive_sort/
-│       └── naive_sort_test.clj      # 3 tests / 24 aserciones
+│       └── naive_sort_test.clj      # 3 tests / 24 aserciones (idiomática)
+│       └── naive_sort_intarray_test.clj  # 3 tests / 24 aserciones (int-array)
 ├── resources/
 │   └── .keep
 ├── doc/
@@ -138,9 +142,9 @@ Ran 3 tests containing 24 assertions.
 
 | Algoritmo / Algorithm | Estrategia / Strategy | Complejidad temporal / Time complexity | Mutación / Mutation |
 |---|---|---|:---:|
-| `selection-sort` | Busca el mínimo del resto no ordenado y lo ubica al inicio / Finds the minimum of the unsorted remainder and places it at the front | $O(n^2)$ siempre / always | ❌ ninguna / none |
-| `bubble-sort` | Compara e intercambia adyacentes en pasadas sucesivas / Compares and swaps adjacent elements in successive passes | $O(n^2)$ peor/promedio, $O(n)$ mejor / worst-average, best | ❌ ninguna / none |
-| `insertion-sort` | Inserta cada elemento en su posición dentro del sub-array ya ordenado / Inserts each element into its position within the already sorted sub-array | $O(n^2)$ peor/promedio, $O(n)$ mejor / worst-average, best | ❌ ninguna / none |
+| `selection-sort` | Busca el mínimo del resto no ordenado y lo ubica al inicio / Finds the minimum of the unsorted remainder and places it at the front | $O(n^2)$ siempre / always | ❌ ninguna / none (idiomática)<br>✅ in-place (int-array) |
+| `bubble-sort` | Compara e intercambia adyacentes en pasadas sucesivas / Compares and swaps adjacent elements in successive passes | $O(n^2)$ peor/promedio, $O(n)$ mejor / worst-average, best | ❌ ninguna / none (idiomática)<br>✅ in-place (int-array) |
+| `insertion-sort` | Inserta cada elemento en su posición dentro del sub-array ya ordenado / Inserts each element into its position within the already sorted sub-array | $O(n^2)$ peor/promedio, $O(n)$ mejor / worst-average, best | ❌ ninguna / none (idiomática)<br>✅ in-place (int-array) |
 
 ### Casos cubiertos por las pruebas / Cases covered by the tests
 
@@ -163,9 +167,13 @@ Cada algoritmo verifica los mismos 8 casos (24 aserciones en total) / Each algor
 
 ### 🧬 Inmutabilidad y composición / Immutability and composition
 
-**ES:** Ninguna función muta su argumento. Los intercambios y la inserción se expresan con operaciones que devuelven colecciones nuevas (`assoc`, `conj`, `subvec`, `concat`), y el estado de cada pasada se propaga con `loop`/`recur` en lugar de reasignar variables. Esto es lo que hace que la realización difiera del `in-place` que describe la especificación: el concepto algorítmico es el mismo, pero el idioma de Clojure trabaja con valores.
+**ES:** La versión idiomática (`naive_sort.clj`) no muta su argumento. Los intercambios y la inserción se expresan con operaciones que devuelven colecciones nuevas (`assoc`, `conj`, `subvec`, `concat`), y el estado de cada pasada se propaga con `loop`/`recur` en lugar de reasignar variables. Esto es lo que hace que la realización difiera del `in-place` que describe la especificación: el concepto algorítmico es el mismo, pero el idioma de Clojure trabaja con valores.
 
-**EN:** No function mutates its argument. Swaps and insertion are expressed with operations that return new collections (`assoc`, `conj`, `subvec`, `concat`), and each pass's state is threaded with `loop`/`recur` instead of reassigning variables. This is what makes the realization differ from the `in-place` approach described in the specification: the algorithmic concept is the same, but Clojure's idiom works with values.
+La versión con arrays (`naive_sort_intarray.clj`) usa `int-array`, `aget`, `aset` y `dotimes` para lograr mutación in-place real, a costa de abandonar la inmutabilidad. Esta versión se incluye para comparar rendimiento y mostrar la interop con Java.
+
+**EN:** The idiomatic version (`naive_sort.clj`) does not mutate its argument. Swaps and insertion are expressed with operations that return new collections (`assoc`, `conj`, `subvec`, `concat`), and each pass's state is threaded with `loop`/`recur` instead of reassigning variables. This is what makes the realization differ from the `in-place` approach described in the specification: the algorithmic concept is the same, but Clojure's idiom works with values.
+
+The array-based version (`naive_sort_intarray.clj`) uses `int-array`, `aget`, `aset`, and `dotimes` to achieve real in-place mutation at the cost of abandoning immutability. This version is included for performance comparison and to demonstrate Java interop.
 
 ### 🔁 Iteración con `loop`/`recur` / Iteration with `loop`/`recur`
 
@@ -195,13 +203,35 @@ Cada algoritmo verifica los mismos 8 casos (24 aserciones en total) / Each algor
 
 **ES:** Los datos de los 8 casos se declaran una sola vez como constantes `def ^:private` y un único helper `assert-all-cases` ejecuta las aserciones contra la función que reciba, con el nombre del algoritmo en cada mensaje. Cada test es de 3 líneas, lo que evita repetir los casos tres veces.
 
+Ambas implementaciones (idiomática y con arrays) comparten la misma estructura de pruebas, con la diferencia de que la versión con arrays usa un helper `array->vec` para convertir el `int-array` mutado a vector antes de la comparación.
+
 **EN:** The data for the 8 cases is declared once as `def ^:private` constants and a single `assert-all-cases` helper runs the assertions against whichever function it receives, with the algorithm name in each message. Each test is 3 lines, avoiding repetition of the cases three times.
+
+Both implementations (idiomatic and array-based) share the same test structure, with the difference that the array-based version uses an `array->vec` helper to convert the mutated `int-array` to a vector before comparison.
 
 ```clojure
 (deftest selection-sort-test
   (testing "selection-sort"
     (assert-all-cases sut/selection-sort "selection-sort")))
 ```
+
+---
+
+### 🧬 Implementación con arrays mutables / Implementation with mutable arrays
+
+**ES:** Se incluyen dos versiones de cada algoritmo para ilustrar el trade-off entre inmutabilidad y rendimiento:
+
+- **Idiomática** (`naive_sort.clj`): usa vectores persistentes y composición de funciones (`reduce`, `conj`, `subvec`). Es el estilo natural de Clojure y no requiere dependencias adicionales. Las funciones **devuelven siempre una colección nueva** y nunca modifican la de entrada.
+- **Con Java arrays** (`naive_sort_intarray.clj`): usa `int-array`, `aget`, `aset` y `dotimes`. Estas funciones son parte de `clojure.core` y no requieren instalación adicional. Esta versión logra mutación in-place real, a costa de abandonar la inmutabilidad. Se incluye para comparar rendimiento y mostrar la interop con Java.
+
+La versión idiomática es la recomendada para aprendizaje y uso en producción; la versión con arrays muestra cómo acceder a la interop con Java cuando se necesita rendimiento crítico.
+
+**EN:** Two versions of each algorithm are included to illustrate the trade-off between immutability and performance:
+
+- **Idiomatic** (`naive_sort.clj`): uses persistent vectors and functional composition (`reduce`, `conj`, `subvec`). This is Clojure's natural style and requires no additional dependencies. Functions **always return a new collection** and never mutate the input.
+- **With Java arrays** (`naive_sort_intarray.clj`): uses `int-array`, `aget`, `aset`, and `dotimes`. These functions are part of `clojure.core` and require no additional installation. This version achieves real in-place mutation at the cost of abandoning immutability. It is included for performance comparison and to demonstrate Java interop.
+
+The idiomatic version is recommended for learning and production use; the array-based version shows how to access Java interop when critical performance is needed.
 
 ---
 
