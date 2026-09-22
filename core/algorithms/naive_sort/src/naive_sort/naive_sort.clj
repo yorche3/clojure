@@ -62,21 +62,27 @@
         ;; if there is only one element left to sort, the array is already sorted
         sorted
         ;; otherwise, perform a pass of bubble sort on the first n elements
-        (recur (loop [i 0
-                      s sorted]
-                 ;; i: keeps track of the current index in the pass
-                 ;; s: keeps track of the current state of the array during the pass
-                 (if (>= i (dec n))
-                   ;; if the current index has reached the end of the unsorted portion, return the array as it is for this pass
-                   s
-                   ;; otherwise, compare the current element with the next element and swap if necessary
-                   (let [s (if (> (nth s i) (nth s (inc i)))
-                             (assoc s i (nth s (inc i)) (inc i) (nth s i))
-                             s)]
-                     ;; continue to the next index in the pass
-                     (recur (inc i) s))))
-               ;; after completing a pass, reduce the number of elements left to sort and repeat
-               (dec n))))))
+        (let [[new-sorted swapped?]
+              (loop [i 0
+                     s sorted
+                     swapped? false]
+                ;; i: keeps track of the current index in the pass
+                ;; s: keeps track of the current state of the array during the pass
+                ;; swapped?: keeps track if any swaps occurred in this pass
+                (if (>= i (dec n))
+                  ;; if the current index has reached the end of the unsorted portion, return the array and swapped flag
+                  [s swapped?]
+                  ;; otherwise, compare the current element with the next element and swap if necessary
+                  (if (> (nth s i) (nth s (inc i)))
+                    ;; swap elements and set swapped? to true
+                    (recur (inc i) (assoc s i (nth s (inc i)) (inc i) (nth s i)) true)
+                    ;; no swap needed, continue to next index
+                    (recur (inc i) s swapped?))))]
+          (if swapped?
+            ;; if swaps occurred, reduce the number of elements left to sort and repeat
+            (recur new-sorted (dec n))
+            ;; if no swaps occurred, the array is fully sorted
+            new-sorted))))))
 
 ;; Insertion sort: sorts an array using the insertion sort algorithm
 ;; input: an array of elements to be sorted

@@ -27,17 +27,17 @@
             (recur (inc i)))  ; i++
           arr)))))  ; return arr when i >= n
 
-;; Helper function to perform one pass of bubble sort
+;; Helper function to perform one pass of bubble sort and return if a swap occurred
 (defn- bubble-pass! [^ints arr n pass]
-  (loop [j 0]
+  (loop [j 0 swapped false]
     (if (< j (- n pass 1))
-      (do
-        (when (> (aget arr j) (aget arr (inc j)))
-          (let [temp (aget arr j)]
-            (aset arr j (aget arr (inc j)))
-            (aset arr (inc j) temp)))
-        (recur (inc j)))
-      arr)))
+      (if (> (aget arr j) (aget arr (inc j)))
+        (let [temp (aget arr j)]
+          (aset arr j (aget arr (inc j)))
+          (aset arr (inc j) temp)
+          (recur (inc j) true))
+        (recur (inc j) swapped))
+      swapped)))
 
 ;; bubble-sort-intarray: sorts an int-array using the bubble sort algorithm with in-site mutation
 ;; input: an int-array to be sorted (mutated in-place)
@@ -48,9 +48,10 @@
     (let [n (count arr)]  ; perform bubble sort
       (loop [i 0]
         (if (< i (dec n))
-          (do
-            (bubble-pass! arr n i)  ; perform one pass of bubble sort
-            (recur (inc i)))
+          (let [swapped (bubble-pass! arr n i)]  ; perform one pass of bubble sort
+            (if swapped
+              (recur (inc i))
+              arr))
           arr)))))
 
 ;; Helper function to insert an element at the correct position
