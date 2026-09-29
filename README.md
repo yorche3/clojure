@@ -9,6 +9,7 @@ Proyectos en **Clojure** (v1.12), ejecutados sobre la **JVM** con **Clojure CLI 
 | Módulo | Descripción |
 |--------|-------------|
 | [`core/foundations/`](core/foundations/) | **Fase 0 — Fundamentos**: `hello_world`, `hello_user`, `calculator`, `numbers` |
+| [`core/algorithms/`](core/algorithms/) | **Fase 1 — Algoritmos Puros**: `naive_sort`, `data_structures_basics` |
 
 ---
 
@@ -29,6 +30,10 @@ clojure -T:build test
 
 # Numbers Tests
 cd core/foundations/numbers
+clojure -T:build test
+
+# Data Structures Basics Tests
+cd core/algorithms/data_structures_basics
 clojure -T:build test
 ```
 
