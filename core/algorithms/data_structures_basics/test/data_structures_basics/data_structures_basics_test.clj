@@ -1,209 +1,154 @@
 (ns data-structures-basics.data-structures-basics-test
-  (:require [clojure.test :refer [deftest is]]
-            [data-structures-basics.data-structures-basics :as sut]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [data-structures-basics.data-structures-basics :as sut])) ; system under test
 
-(def node-initial-value 10)
-(def node-linked-value 20)
+;; Shared fixtures: the specification's positive integers, so no value can be
+;; confused with the failure indicator.
 
-(def linked-list-tail-values [10 20 10])
-(def linked-list-head-value 5)
-(def linked-list-absent-value 99)
-(def linked-list-initial-size 0)
-(def linked-list-populated-size 4)
-(def linked-list-deleted-size 3)
-(def linked-list-empty-size 0)
+(def ^:private first-value 10)
+(def ^:private second-value 20)
+(def ^:private head-value 5)
+(def ^:private third-value 30)
+(def ^:private absent-value 99)
+(def ^:private reused-value 40)
 
-(def stack-values [10 20 30])
-(def stack-reused-value 40)
-(def stack-empty-size 0)
-(def stack-populated-size 3)
+;; Two adaptations the tests rely on; the module README declares them:
+;;
+;;   1. The structures are immutable, so every operation *returns* the new
+;;      value: the scenarios thread it instead of mutating it in place. That is
+;;      why a removal gives back the structure next to the extracted value.
+;;   2. There are no getters or setters. A record field is read with the keyword
+;;      (`(:value node)`, `(:next node)`) and updated with `assoc`, which is the
+;;      language's own reading and writing of a field.
+;;
+;; `nil` is the failure indicator: `sut/ll-delete` returns it when the value is
+;; absent, and `sut/stack-pop`/`sut/queue-dequeue` return it when there is
+;; nothing to remove.
 
-(def queue-values [10 20 30])
-(def queue-reused-value 40)
-(def queue-empty-size 0)
-(def queue-populated-size 3)
+(defn- chain
+  "The linked list's values, walked from its head through the node links. It is
+  the traversal the specification's cases observe: the contract exposes the
+  head's value, so the walk reads the chain the structure links."
+  [linked-list]
+  (->> (:head linked-list)
+       (iterate :next)
+       (take-while some?)
+       (map :value)))
 
-(defn assert-case [subject case-name expected actual]
-  (is (= expected actual)
-      (str subject " should return " (pr-str expected)
-           " in " case-name ", but returned " (pr-str actual))))
+(defn- drain
+  "Removes every element of `structure` in removal order and returns
+  `[values remaining]`. `is-empty?` and `remove-fn` are the structure's own
+  operations, and `remaining-key` is the key `remove-fn` returns it under."
+  [structure is-empty? remove-fn remaining-key]
+  (loop [structure structure
+         values []]
+    (if (is-empty? structure)
+      [values structure]
+      (let [removed (remove-fn structure)]
+        (recur (get removed remaining-key)
+               (conj values (:value removed)))))))
 
-(defn run-node-cases []
-  (let [a (sut/node-init node-initial-value)
-        b (sut/node-init node-linked-value)]
-    (assert-case "node-get-value" "initialize and observe value/link"
-                 node-initial-value (sut/node-get-value a))
-    (assert-case "node-get-next" "initialize and observe value/link"
-                 nil (sut/node-get-next a))
-    (sut/node-set-next a b)
-    (assert-case "node-set-next" "initialize another node, link and traverse"
-                 node-linked-value
-                 (sut/node-get-value (sut/node-get-next a)))
-    (assert-case "node-get-next" "initialize another node, link and traverse"
-                 nil (sut/node-get-next b))))
+(deftest node-test
+  (testing "Initialize and observe value/link"
+    (let [node (sut/node-init first-value)]
+      (is (= first-value (:value node)))
+      (is (nil? (:next node)))))
+  (testing "Initialize another node, link and traverse"
+    (let [first-node (sut/node-init first-value)
+          second-node (sut/node-init second-value)
+          linked (assoc first-node :next second-node)]
+      (is (= second-value (:value (:next linked))))
+      (is (nil? (:next second-node))))))
 
-(defn run-linked-list-cases []
-  (let [linked-list (sut/linked-list-init)]
-    (assert-case "linked-list-is-empty" "empty state"
-                 true (sut/linked-list-is-empty linked-list))
-    (assert-case "linked-list-size" "empty state"
-                 linked-list-initial-size (sut/linked-list-size linked-list))
-    (assert-case "linked-list-get-head" "empty state"
-                 nil (sut/linked-list-get-head linked-list))
-    (doseq [value linked-list-tail-values]
-      (sut/linked-list-insert-tail linked-list value))
-    (sut/linked-list-insert-head linked-list linked-list-head-value)
-    (assert-case "linked-list-size" "insert at both ends"
-                 linked-list-populated-size (sut/linked-list-size linked-list))
-    (assert-case "linked-list-get-head" "insert at both ends"
-                 linked-list-head-value (sut/linked-list-get-head linked-list))
-    (assert-case "linked-list-delete" "delete first occurrence"
-                 true (sut/linked-list-delete linked-list node-initial-value))
-    (assert-case "linked-list-size" "delete first occurrence"
-                 linked-list-deleted-size (sut/linked-list-size linked-list))
-    (assert-case "linked-list-get-head" "delete first occurrence"
-                 linked-list-head-value (sut/linked-list-get-head linked-list))
-    (assert-case "linked-list-delete" "absent value"
-                 false (sut/linked-list-delete linked-list linked-list-absent-value))
-    (assert-case "linked-list-size" "absent value"
-                 linked-list-deleted-size (sut/linked-list-size linked-list))
-    (doseq [value [linked-list-head-value node-linked-value node-initial-value]]
-      (assert-case "linked-list-delete" "empty the list"
-                   true (sut/linked-list-delete linked-list value)))
-    (assert-case "linked-list-is-empty" "empty the list"
-                 true (sut/linked-list-is-empty linked-list))
-    (assert-case "linked-list-size" "empty the list"
-                 linked-list-empty-size (sut/linked-list-size linked-list))
-    (assert-case "linked-list-get-head" "empty the list"
-                 nil (sut/linked-list-get-head linked-list))))
+(deftest linked-list-test
+  (let [empty-list (sut/linked-list-init)]
+    (testing "Empty state"
+      (is (sut/linked-list-is-empty empty-list))
+      (is (= 0 (sut/linked-list-size empty-list)))
+      (is (nil? (sut/get-head empty-list))))
+    (testing "Insert at both ends"
+      (let [linked-list (-> empty-list
+                            (sut/ll-insert-tail first-value)
+                            (sut/ll-insert-tail second-value)
+                            (sut/ll-insert-head head-value)
+                            (sut/ll-insert-tail first-value))]
+        (is (= 4 (sut/linked-list-size linked-list)))
+        (is (= head-value (sut/get-head linked-list)))
+        (is (= [head-value first-value second-value first-value] (chain linked-list)))
+        (testing "Delete first occurrence"
+          (let [without-first (sut/ll-delete linked-list first-value)]
+            (is (some? without-first))
+            (is (= 3 (sut/linked-list-size without-first)))
+            (is (= head-value (sut/get-head without-first)))
+            (is (= [head-value second-value first-value] (chain without-first)))
+            (is (= 4 (sut/linked-list-size linked-list)))
+            (testing "Absent value"
+              (is (nil? (sut/ll-delete without-first absent-value)))
+              (is (= 3 (sut/linked-list-size without-first)))
+              (is (= [head-value second-value first-value] (chain without-first))))
+            (testing "Empty the list"
+              (let [after-head (sut/ll-delete without-first head-value)
+                    after-second (sut/ll-delete after-head second-value)
+                    after-last (sut/ll-delete after-second first-value)]
+                (is (= [second-value first-value] (chain after-head)))
+                (is (= [first-value] (chain after-second)))
+                (is (sut/linked-list-is-empty after-last))
+                (is (= 0 (sut/linked-list-size after-last)))
+                (is (nil? (sut/get-head after-last)))
+                (is (= [] (chain after-last)))))))))))
 
-(defn run-stack-cases []
-  (let [stack (sut/stack-init)]
-    (assert-case "stack-is-empty" "empty state and failed removal"
-                 true (sut/stack-is-empty stack))
-    (assert-case "stack-size" "empty state and failed removal"
-                 stack-empty-size (sut/stack-size stack))
-    (assert-case "stack-peek" "empty state and failed removal"
-                 nil (sut/stack-peek stack))
-    (assert-case "stack-pop" "empty state and failed removal"
-                 nil (sut/stack-pop stack))
-    (doseq [value stack-values]
-      (sut/stack-push stack value))
-    (assert-case "stack-peek" "LIFO and non-mutating peek"
-                 30 (sut/stack-peek stack))
-    (assert-case "stack-size" "LIFO and non-mutating peek"
-                 stack-populated-size (sut/stack-size stack))
-    (assert-case "stack-pop" "removal and reuse"
-                 30 (sut/stack-pop stack))
-    (sut/stack-push stack stack-reused-value)
-    (doseq [expected [stack-reused-value node-linked-value node-initial-value]]
-      (assert-case "stack-pop" "removal and reuse"
-                   expected (sut/stack-pop stack)))
-    (assert-case "stack-is-empty" "removal and reuse"
-                 true (sut/stack-is-empty stack))
-    (assert-case "stack-size" "removal and reuse"
-                 stack-empty-size (sut/stack-size stack))
-    (assert-case "stack-pop" "empty after removal"
-                 nil (sut/stack-pop stack))
-    (assert-case "stack-is-empty" "empty after removal"
-                 true (sut/stack-is-empty stack))))
+(deftest stack-test
+  (testing "Empty state and failed removal"
+    (let [stack (sut/stack-init)]
+      (is (sut/stack-is-empty stack))
+      (is (= 0 (sut/stack-size stack)))
+      (is (nil? (sut/stack-peek stack)))
+      (is (nil? (sut/stack-pop stack)))))
+  (testing "LIFO and non-mutating peek"
+    (let [stack (-> (sut/stack-init)
+                    (sut/stack-push first-value)
+                    (sut/stack-push second-value)
+                    (sut/stack-push third-value))]
+      (is (= third-value (sut/stack-peek stack)))
+      (is (= 3 (sut/stack-size stack)))))
+  (testing "Removal and reuse"
+    (let [stack (-> (sut/stack-init)
+                    (sut/stack-push first-value)
+                    (sut/stack-push second-value)
+                    (sut/stack-push third-value))
+          removed (sut/stack-pop stack)
+          reused (sut/stack-push (:stack removed) reused-value)
+          [values remaining] (drain reused sut/stack-is-empty sut/stack-pop :stack)]
+      (is (= third-value (:value removed)))
+      (is (= 3 (sut/stack-size stack)))
+      (is (= [reused-value second-value first-value] values))
+      (is (sut/stack-is-empty remaining))
+      (is (= 0 (sut/stack-size remaining))))))
 
-(defn run-queue-cases []
-  (let [queue (sut/queue-init)]
-    (assert-case "queue-is-empty" "empty state and failed removal"
-                 true (sut/queue-is-empty queue))
-    (assert-case "queue-size" "empty state and failed removal"
-                 queue-empty-size (sut/queue-size queue))
-    (assert-case "queue-peek" "empty state and failed removal"
-                 nil (sut/queue-peek queue))
-    (assert-case "queue-dequeue" "empty state and failed removal"
-                 nil (sut/queue-dequeue queue))
-    (doseq [value queue-values]
-      (sut/queue-enqueue queue value))
-    (assert-case "queue-peek" "FIFO and non-mutating peek"
-                 node-initial-value (sut/queue-peek queue))
-    (assert-case "queue-size" "FIFO and non-mutating peek"
-                 queue-populated-size (sut/queue-size queue))
-    (assert-case "queue-dequeue" "removal and reuse"
-                 node-initial-value (sut/queue-dequeue queue))
-    (sut/queue-enqueue queue queue-reused-value)
-    (doseq [expected [node-linked-value 30 queue-reused-value]]
-      (assert-case "queue-dequeue" "removal and reuse"
-                   expected (sut/queue-dequeue queue)))
-    (assert-case "queue-is-empty" "removal and reuse"
-                 true (sut/queue-is-empty queue))
-    (assert-case "queue-size" "removal and reuse"
-                 queue-empty-size (sut/queue-size queue))
-    (assert-case "queue-dequeue" "empty after removal"
-                 nil (sut/queue-dequeue queue))
-    (assert-case "queue-is-empty" "empty after removal"
-                 true (sut/queue-is-empty queue))))
-
-(deftest node-init-test
-  (run-node-cases))
-
-(deftest node-get-value-test
-  (run-node-cases))
-
-(deftest node-get-next-test
-  (run-node-cases))
-
-(deftest node-set-next-test
-  (run-node-cases))
-
-(deftest linked-list-init-test
-  (run-linked-list-cases))
-
-(deftest linked-list-get-head-test
-  (run-linked-list-cases))
-
-(deftest linked-list-insert-head-test
-  (run-linked-list-cases))
-
-(deftest linked-list-insert-tail-test
-  (run-linked-list-cases))
-
-(deftest linked-list-delete-test
-  (run-linked-list-cases))
-
-(deftest linked-list-is-empty-test
-  (run-linked-list-cases))
-
-(deftest linked-list-size-test
-  (run-linked-list-cases))
-
-(deftest stack-init-test
-  (run-stack-cases))
-
-(deftest stack-push-test
-  (run-stack-cases))
-
-(deftest stack-pop-test
-  (run-stack-cases))
-
-(deftest stack-peek-test
-  (run-stack-cases))
-
-(deftest stack-is-empty-test
-  (run-stack-cases))
-
-(deftest stack-size-test
-  (run-stack-cases))
-
-(deftest queue-init-test
-  (run-queue-cases))
-
-(deftest queue-enqueue-test
-  (run-queue-cases))
-
-(deftest queue-dequeue-test
-  (run-queue-cases))
-
-(deftest queue-peek-test
-  (run-queue-cases))
-
-(deftest queue-is-empty-test
-  (run-queue-cases))
-
-(deftest queue-size-test
-  (run-queue-cases))
+(deftest queue-test
+  (testing "Empty state and failed removal"
+    (let [queue (sut/queue-init)]
+      (is (sut/queue-is-empty queue))
+      (is (= 0 (sut/queue-size queue)))
+      (is (nil? (sut/queue-peek queue)))
+      (is (nil? (sut/queue-dequeue queue)))))
+  (testing "FIFO and non-mutating peek"
+    (let [queue (-> (sut/queue-init)
+                    (sut/queue-enqueue first-value)
+                    (sut/queue-enqueue second-value)
+                    (sut/queue-enqueue third-value))]
+      (is (= first-value (sut/queue-peek queue)))
+      (is (= 3 (sut/queue-size queue)))))
+  (testing "Removal and reuse"
+    (let [queue (-> (sut/queue-init)
+                    (sut/queue-enqueue first-value)
+                    (sut/queue-enqueue second-value)
+                    (sut/queue-enqueue third-value))
+          removed (sut/queue-dequeue queue)
+          reused (sut/queue-enqueue (:queue removed) reused-value)
+          [values remaining] (drain reused sut/queue-is-empty sut/queue-dequeue :queue)]
+      (is (= first-value (:value removed)))
+      (is (= 3 (sut/queue-size queue)))
+      (is (= [second-value third-value reused-value] values))
+      (is (sut/queue-is-empty remaining))
+      (is (= 0 (sut/queue-size remaining))))))

@@ -7,6 +7,39 @@
 
 (def failure-value nil)
 
+;; `init` of the shared node: assigns `value` and leaves `next` absent. Link it
+;; with `assoc` (the specification's `set_next` returns a new node when the
+;; language is immutable).
+(defn node-init [value]
+  (Node. value nil))
+
+;; Chain helpers. With persistent nodes a link cannot be written in place, so
+;; walking or rebuilding the chain is what `assoc` gives back.
+(defn- chain-append
+  "Chain of `node` with `new-tail` linked after its last node."
+  [node new-tail]
+  (if (nil? node)
+    new-tail
+    (assoc node :next (chain-append (:next node) new-tail))))
+
+(defn- chain-last
+  "Last node of the chain, or `nil` if there is none."
+  [node]
+  (when node
+    (if-let [next-node (:next node)]
+      (recur next-node)
+      node)))
+
+(defn- chain-remove
+  "Returns `[node removed?]`: the chain without the first occurrence of
+  `value`, and whether it appeared."
+  [node value]
+  (cond
+    (nil? node) [nil false]
+    (= (:value node) value) [(:next node) true]
+    :else (let [[next-node removed?] (chain-remove (:next node) value)]
+            [(assoc node :next next-node) removed?])))
+
 (defn linked-list-init []
   (LinkedList. nil nil 0))
 
@@ -17,32 +50,32 @@
   (:count linked-list))
 
 (defn get-head [linked-list]
-  (if (not (linked-list-is-empty linked-list))
-    (:head linked-list)
-    failure-value))
+  (if (linked-list-is-empty linked-list)
+    failure-value
+    (:value (:head linked-list))))
 
-(defn insert-head [linked-list value]
-  (let [new-head (Node. value (:head linked-list))]
-    (LinkedList. new-head (:tail linked-list) (inc (:count linked-list)))))
+(defn ll-insert-head [linked-list value]
+  (let [new-head (assoc (node-init value) :next (:head linked-list))]
+    (LinkedList. new-head
+                 (or (:tail linked-list) new-head)
+                 (inc (:count linked-list)))))
 
-(defn insert-tail [linked-list value]
-  (let [new-tail (Node. value nil)]
+;; Appending at the tail has to rebuild the chain up to the last node, because
+;; the old tail cannot be linked in place: O(n) instead of the specification's
+;; O(1). It is the module's immutable adaptation and goes in its README.
+(defn ll-insert-tail [linked-list value]
+  (let [new-tail (node-init value)]
     (if (linked-list-is-empty linked-list)
       (LinkedList. new-tail new-tail 1)
-      (LinkedList. (:head linked-list) new-tail (inc (:count linked-list))))))
+      (LinkedList. (chain-append (:head linked-list) new-tail)
+                   new-tail
+                   (inc (:count linked-list))))))
 
-(defn delete [linked-list value]
-  (loop [current (:head linked-list)
-         prev nil]
-    (if (nil? current)
-      failure-value
-      (if (= (:value current) value)
-        (if (nil? prev)
-          {:list (LinkedList. (:next current) (:tail linked-list) (dec (:count linked-list)))
-           :success true}
-          {:list (LinkedList. (:head linked-list) (:tail linked-list) (dec (:count linked-list)))
-           :success true})
-        (recur (:next current) current)))))
+(defn ll-delete [linked-list value]
+  (let [[head removed?] (chain-remove (:head linked-list) value)]
+    (if removed?
+      (LinkedList. head (chain-last head) (dec (:count linked-list)))
+      failure-value)))
 
 (defn stack-init []
   (Stack. nil 0))
@@ -53,9 +86,9 @@
 (defn stack-size [stack]
   (:count stack))
 
-(defn push [stack value]
-  (let [new-top (Node. value (:top stack))]
-    (Stack. new-top (inc (:count stack)))))
+(defn stack-push [stack value]
+  (Stack. (assoc (node-init value) :next (:top stack))
+          (inc (:count stack))))
 
 (defn stack-peek [stack]
   (if (stack-is-empty stack)
@@ -77,19 +110,25 @@
 (defn queue-size [queue]
   (:count queue))
 
-(defn enqueue [queue value]
-  (let [new-rear (Node. value nil)]
+(defn queue-enqueue [queue value]
+  (let [new-rear (node-init value)]
     (if (queue-is-empty queue)
       (Queue. new-rear new-rear 1)
-      (Queue. (:front queue) new-rear (inc (:count queue)))))))
+      (Queue. (chain-append (:front queue) new-rear)
+              new-rear
+              (inc (:count queue))))))
 
 (defn queue-peek [queue]
   (if (queue-is-empty queue)
     failure-value
     (:value (:front queue))))
 
-(defn dequeue [queue]
+(defn queue-dequeue [queue]
   (if (queue-is-empty queue)
     failure-value
-    {:queue (Queue. (:next (:front queue)) (:rear queue) (dec (:count queue)))
-     :value (:value (:front queue))}))
+    (let [front (:front queue)
+          next-front (:next front)]
+      {:queue (Queue. next-front
+                      (when next-front (:rear queue))
+                      (dec (:count queue)))
+       :value (:value front)})))
