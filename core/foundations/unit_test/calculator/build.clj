@@ -20,7 +20,7 @@
   opts)
 
 (defn- pom-template [version]
-  [[:description "FIXME: my new library."]
+  [[:description "Módulo calculator de la especificación 03_Unit_Test_Calculator en Clojure."]
    [:url "https://github.com/proglangs/calculator"]
    [:licenses
     [:license
