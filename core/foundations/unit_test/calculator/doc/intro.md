@@ -1,3 +1,3 @@
 # Introduction to proglangs/calculator
 
-TODO: write [great documentation](http://jacobian.org/writing/what-to-write/)
+Módulo `calculator` de la especificación [03_Unit_Test_Calculator](https://yorche3.github.io/programming_languages/core/foundations/03_Unit_Test_Calculator/): las cinco operaciones aritméticas con implementaciones educativas, con su suite de pruebas en `test/`.
