@@ -20,7 +20,7 @@
   opts)
 
 (defn- pom-template [version]
-  [[:description "FIXME: my new library."]
+  [[:description "Módulo numbers de la especificación 04_Numbers en Clojure."]
    [:url "https://github.com/proglangs/numbers"]
    [:licenses
     [:license
