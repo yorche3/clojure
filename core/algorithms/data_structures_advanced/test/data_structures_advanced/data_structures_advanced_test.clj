@@ -4,6 +4,8 @@
 
 ;; Steps bind contract results by name; keyword arguments refer to those results.
 ;; Only node/structure returns are observed as success, never their representation.
+;; Predicates (contains, has-edge) always answer true or false; nil is
+;; reserved for an operation that should return a structure and cannot build it.
 (def ^:private operations
   {:tree-node-init sut/tree-node-init
    :tree-node-get-value sut/tree-node-get-value
@@ -104,7 +106,7 @@
    [:empty :binary-tree-is-empty :tree]
    [:size :binary-tree-size :tree]
    [:missing :binary-tree-contains :tree 50]])
-(def ^:private empty-tree-output [:success true 0 nil])
+(def ^:private empty-tree-output [:success true 0 false])
 
 (def ^:private root-input
   [[:tree :binary-tree-init]
@@ -149,7 +151,7 @@
    [:missing :binary-tree-contains :root 99]
    [:size :binary-tree-size :root]
    [:present :binary-tree-contains :root 50]])
-(def ^:private missing-tree-value-output [:success :success nil 1 true])
+(def ^:private missing-tree-value-output [:success :success false 1 true])
 
 (def ^:private duplicate-tree-value-input
   [[:tree :binary-tree-init]
@@ -180,7 +182,7 @@
    [:missing :binary-tree-contains :fifth 99]])
 (def ^:private ordered-insertions-output
   [:success :success :success :success :success :success
-   5 true true true true true nil])
+   5 true true true true true false])
 
 (def ^:private tree-cases
   [["Create empty" empty-tree-input empty-tree-output]
@@ -198,7 +200,7 @@
    [:edges :graph-edge-count :graph]
    [:missing-edge :graph-has-edge :graph 10 30]
    [:missing-neighbors :graph-get-neighbors :graph 10]])
-(def ^:private empty-graph-output [:success true 0 0 nil nil])
+(def ^:private empty-graph-output [:success true 0 0 false nil])
 
 (def ^:private isolated-vertex-input
   [[:graph :graph-init]
@@ -219,7 +221,7 @@
    [:vertices :graph-vertex-count :linked]
    [:edges :graph-edge-count :linked]])
 (def ^:private directed-edge-output
-  [:success :success :success :success true nil 2 1])
+  [:success :success :success :success true false 2 1])
 
 (def ^:private duplicate-vertex-input
   [[:graph :graph-init]
@@ -266,7 +268,7 @@
    [:missing-99 :graph-get-neighbors :linked 99]])
 (def ^:private missing-endpoint-output
   [:success :success :success :success nil nil nil nil
-   2 1 [30] [] nil nil nil nil nil nil])
+   2 1 [30] [] false false false false nil nil])
 
 (def ^:private sorted-neighbors-input
   [[:graph :graph-init]
@@ -297,7 +299,7 @@
    [:edges :graph-edge-count :second]
    [:empty :graph-is-empty :second]])
 (def ^:private missing-edge-output
-  [:success :success :success nil 2 0 false])
+  [:success :success :success false 2 0 false])
 
 (def ^:private missing-neighbors-input
   [[:graph :graph-init]
