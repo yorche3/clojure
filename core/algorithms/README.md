@@ -16,11 +16,19 @@ algorithms/
 │   ├── deps.edn
 │   ├── build.clj
 │   └── README.md
-└── data_structures_basics/          # 06_Data_Structures_Basics
-    ├── src/data_structures_basics/
-    │   └── data_structures_basics.clj
-    ├── test/data_structures_basics/
-    │   └── data_structures_basics_test.clj
+├── data_structures_basics/          # 06_Data_Structures_Basics
+│   ├── src/data_structures_basics/
+│   │   └── data_structures_basics.clj
+│   ├── test/data_structures_basics/
+│   │   └── data_structures_basics_test.clj
+│   ├── deps.edn
+│   ├── build.clj
+│   └── README.md
+└── data_structures_advanced/        # 07_Data_Structures_Advanced
+    ├── src/data_structures_advanced/
+    │   └── data_structures_advanced.clj
+    ├── test/data_structures_advanced/
+    │   └── data_structures_advanced_test.clj
     ├── deps.edn
     ├── build.clj
     └── README.md
@@ -34,7 +42,7 @@ algorithms/
 |--------|---------------|---------|-------|--------|
 | [`naive_sort/`](naive_sort/) | [05_Naive_Sort](https://yorche3.github.io/programming_languages/core/algorithms/05_Naive_Sort/) | `clojure -T:build test` (deps.edn + clojure.test) | 3 tests / 24 aserciones | ✅ |
 | [`data_structures_basics/`](data_structures_basics/) | [06_Data_Structures_Basics](https://yorche3.github.io/programming_languages/core/algorithms/06_Data_Structures_Basics/) | `clojure -T:build test` (deps.edn + clojure.test) | 4 tests / 46 aserciones | ✅ |
-| 📋 `data_structures_advanced` | [07_Data_Structures_Advanced](https://yorche3.github.io/programming_languages/core/algorithms/07_Data_Structures_Advanced/) | — | — | 📋 |
+| [`data_structures_advanced/`](data_structures_advanced/) | [07_Data_Structures_Advanced](https://yorche3.github.io/programming_languages/core/algorithms/07_Data_Structures_Advanced/) | `clojure -T:build test` (deps.edn + clojure.test) | 19 tests / 159 aserciones | ✅ |
 | 📋 `efficient_sort` | [08_Efficient_Sort](https://yorche3.github.io/programming_languages/core/algorithms/08_Efficient_Sort/) | — | — | 📋 |
 | 📋 `distributed_sort` | [09_Distributed_Sort](https://yorche3.github.io/programming_languages/core/algorithms/09_Distributed_Sort/) | — | — | 📋 |
 | 📋 `searching` | [10_Searching](https://yorche3.github.io/programming_languages/core/algorithms/10_Searching/) | — | — | 📋 |
@@ -60,14 +68,17 @@ cd naive_sort && clojure -T:build test
 
 # data_structures_basics
 cd data_structures_basics && clojure -T:build test
+
+# data_structures_advanced
+cd data_structures_advanced && clojure -T:build test
 ```
 
 ---
 
 ## ▶️ Siguiente / Next
 
-👉 Sigue con [`data_structures_basics`](data_structures_basics/README.md).  
-👉 Continue with [`data_structures_basics`](data_structures_basics/README.md).
+👉 Sigue con [`data_structures_advanced`](data_structures_advanced/README.md).
+👉 Continue with [`data_structures_advanced`](data_structures_advanced/README.md).
 
 ### 🌐 Otras implementaciones / Other implementations
 
