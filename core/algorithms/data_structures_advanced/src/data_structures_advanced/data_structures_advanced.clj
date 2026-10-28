@@ -6,8 +6,6 @@
 (defrecord GraphNode [value neighbors next-vertex])
 (defrecord Graph [vertices vertex-total edges])
 
-(def failure-value nil)
-
 ;; All operation bodies are placeholders, including constructors and queries.
 (defn tree-node-init
   "Integer -> TreeNode. Creates a node with absent left and right links."
@@ -55,7 +53,7 @@
 (defn binary-tree-contains
   "BinaryTree, Integer -> true or nil. Returns true if present, nil if absent."
   [tree value]
-  nil)
+  false)
 
 (defn binary-tree-is-empty
   "BinaryTree -> Boolean. Reports whether the tree has no nodes."
@@ -95,7 +93,7 @@
   "Graph, Integer, Integer -> true or nil. Returns true for an existing directed
   edge, nil for an absent edge or endpoint, without changing the graph."
   [graph u v]
-  nil)
+  false)
 
 (defn graph-get-neighbors
   "Graph, Integer -> immutable sequence of Integers or nil. Returns ascending,
