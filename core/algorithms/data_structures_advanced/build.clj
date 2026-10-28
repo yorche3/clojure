@@ -20,19 +20,19 @@
   opts)
 
 (defn- pom-template [version]
-  [[:description "FIXME: my new library."]
-   [:url "https://github.com/data_structures_advanced/data_structures_advanced"]
+  [[:description "Módulo data_structures_advanced de la especificación 07_Data_Structures_Advanced en Clojure."]
+   [:url "https://github.com/proglangs/data_structures_advanced"]
    [:licenses
     [:license
-     [:name "Eclipse Public License"]
-     [:url "http://www.eclipse.org/legal/epl-v10.html"]]]
+     [:name "Eclipse Public License 2.0"]
+     [:url "https://www.eclipse.org/legal/epl-2.0"]]]
    [:developers
     [:developer
      [:name "Yorche3"]]]
    [:scm
-    [:url "https://github.com/data_structures_advanced/data_structures_advanced"]
-    [:connection "scm:git:https://github.com/data_structures_advanced/data_structures_advanced.git"]
-    [:developerConnection "scm:git:ssh:git@github.com:data_structures_advanced/data_structures_advanced.git"]
+    [:url "https://github.com/proglangs/data_structures_advanced"]
+    [:connection "scm:git:https://github.com/proglangs/data_structures_advanced.git"]
+    [:developerConnection "scm:git:ssh:git@github.com:proglangs/data_structures_advanced.git"]
     [:tag (str "v" version)]]])
 
 (defn- jar-opts [opts]
